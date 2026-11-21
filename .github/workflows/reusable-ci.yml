@@ -23,7 +23,12 @@ jobs:
     steps:
       - name: Checkout application source
         uses: actions/checkout@v4
-        
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
+        with:
+          version: v0.68.2
+          
       - name: Security Scan
         uses: aquasecurity/trivy-action@0.31.0
         with:
@@ -32,6 +37,7 @@ jobs:
           format: table
           exit-code: '1'
           severity: CRITICAL,HIGH
+          skip-setup-trivy: true
 
       - name: Infrastructure Security Scan
         uses: aquasecurity/trivy-action@0.31.0
@@ -41,6 +47,8 @@ jobs:
           format: table
           exit-code: '1'
           severity: CRITICAL,HIGH
+          skip-setup-trivy: true
+          
       - name: Validate script paths
         env:
           BUILD_SCRIPT: ${{ inputs.build_script }}
