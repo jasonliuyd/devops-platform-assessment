@@ -1,0 +1,43 @@
+name: Shared CI
+
+on:
+  workflow_call:
+    inputs:
+      build_script:
+        description: Path to the application build script
+        required: true
+        type: string
+      test_script:
+        description: Path to the application test script
+        required: true
+        type: string
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout application source
+        uses: actions/checkout@v4
+
+      - name: Validate script paths
+        env:
+          BUILD_SCRIPT: ${{ inputs.build_script }}
+          TEST_SCRIPT: ${{ inputs.test_script }}
+        run: |
+          test -f "$BUILD_SCRIPT"
+          test -f "$TEST_SCRIPT"
+
+      - name: Build application
+        env:
+          BUILD_SCRIPT: ${{ inputs.build_script }}
+        run: bash "$BUILD_SCRIPT"
+
+      - name: Run tests
+        env:
+          TEST_SCRIPT: ${{ inputs.test_script }}
+        run: bash "$TEST_SCRIPT"
