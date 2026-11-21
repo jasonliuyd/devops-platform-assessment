@@ -1,4 +1,5 @@
-
+#checkov:skip=CKV_AWS_144:Cross-region replication is reserved for production deployment with a defined DR region.
+#checkov:skip=CKV2_AWS_62:Artifact event notifications are not required in this assessment example.
 # Main artifact bucket
 resource "aws_s3_bucket" "platform_artifacts" {
   bucket = "devops-platform-assessment-artifacts-example"
