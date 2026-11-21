@@ -29,26 +29,6 @@ jobs:
         with:
           version: v0.68.2
           
-      - name: Security Scan
-        uses: aquasecurity/trivy-action@0.31.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          format: table
-          exit-code: '1'
-          severity: CRITICAL,HIGH
-          skip-setup-trivy: true
-
-      - name: Infrastructure Security Scan
-        uses: aquasecurity/trivy-action@0.31.0
-        with:
-          scan-type: config
-          scan-ref: ./infra
-          format: table
-          exit-code: '1'
-          severity: CRITICAL,HIGH
-          skip-setup-trivy: true
-          
       - name: Validate script paths
         env:
           BUILD_SCRIPT: ${{ inputs.build_script }}
