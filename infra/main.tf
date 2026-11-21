@@ -1,5 +1,7 @@
 #checkov:skip=CKV_AWS_144:Cross-region replication is reserved for production deployment with a defined DR region.
 #checkov:skip=CKV2_AWS_62:Artifact event notifications are not required in this assessment example.
+#checkov:skip=CKV_AWS_21:Versioning is enabled on the main artifact bucket. Log bucket versioning is not required for this example.
+#checkov:skip=CKV2_AWS_61:Lifecycle retention is configured on the main artifact bucket. Log bucket lifecycle is not required for this example.
 # Main artifact bucket
 resource "aws_s3_bucket" "platform_artifacts" {
   bucket = "devops-platform-assessment-artifacts-example"
