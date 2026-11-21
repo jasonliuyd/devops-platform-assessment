@@ -64,34 +64,36 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "platform_artifact
   }
 }
 
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 # Allow S3 logging service to write access logs
 resource "aws_s3_bucket_policy" "platform_artifact_logs" {
   bucket = aws_s3_bucket.platform_artifact_logs.id
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Sid       = "AllowS3ServerAccessLogs"
-      Effect    = "Allow"
-      Principal = {
-        Service = "logging.s3.amazonaws.com"
-      }
-      Action   = "s3:PutObject"
-      Resource = "${aws_s3_bucket.platform_artifact_logs.arn}/*"
-      Condition = {
-        ArnLike = {
-          "aws:SourceArn" = aws_s3_bucket.platform_artifacts.arn
+    Statement = [
+      {
+        Sid    = "AllowS3ServerAccessLogs"
+        Effect = "Allow"
+        Principal = {
+          Service = "logging.s3.amazonaws.com"
         }
-        StringEquals = {
-          "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.platform_artifact_logs.arn}/*"
+        Condition = {
+          ArnLike = {
+            "aws:SourceArn" = aws_s3_bucket.platform_artifacts.arn
+          }
+          StringEquals = {
+            "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+          }
         }
       }
-    }]
+    ]
   })
 }
-
-# Get current AWS account ID
-data "aws_caller_identity" "current" {}
 
 # Enable access logging on artifact bucket
 resource "aws_s3_bucket_logging" "platform_artifacts" {
