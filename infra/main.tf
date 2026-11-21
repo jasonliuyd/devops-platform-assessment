@@ -1,3 +1,5 @@
+
+# Main artifact bucket
 resource "aws_s3_bucket" "platform_artifacts" {
   bucket = "devops-platform-assessment-artifacts-example"
 
@@ -6,7 +8,7 @@ resource "aws_s3_bucket" "platform_artifacts" {
   }
 }
 
-# Enable bucket versioning
+# Enable versioning
 resource "aws_s3_bucket_versioning" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
@@ -25,18 +27,81 @@ resource "aws_s3_bucket_public_access_block" "platform_artifacts" {
   restrict_public_buckets = true
 }
 
-# Enable encryption at rest
+# KMS encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm = "aws:kms"
     }
   }
 }
 
-# Lifecycle management
+# Separate bucket for access logs
+resource "aws_s3_bucket" "platform_artifact_logs" {
+  bucket = "devops-platform-assessment-artifacts-logs-example"
+}
+
+# Block public access on log bucket
+resource "aws_s3_bucket_public_access_block" "platform_artifact_logs" {
+  bucket = aws_s3_bucket.platform_artifact_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# Encrypt log bucket
+resource "aws_s3_bucket_server_side_encryption_configuration" "platform_artifact_logs" {
+  bucket = aws_s3_bucket.platform_artifact_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+    }
+  }
+}
+
+# Allow S3 logging service to write access logs
+resource "aws_s3_bucket_policy" "platform_artifact_logs" {
+  bucket = aws_s3_bucket.platform_artifact_logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AllowS3ServerAccessLogs"
+      Effect    = "Allow"
+      Principal = {
+        Service = "logging.s3.amazonaws.com"
+      }
+      Action   = "s3:PutObject"
+      Resource = "${aws_s3_bucket.platform_artifact_logs.arn}/*"
+      Condition = {
+        ArnLike = {
+          "aws:SourceArn" = aws_s3_bucket.platform_artifacts.arn
+        }
+        StringEquals = {
+          "aws:SourceAccount" = data.aws_caller_identity.current.account_id
+        }
+      }
+    }]
+  })
+}
+
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
+# Enable access logging on artifact bucket
+resource "aws_s3_bucket_logging" "platform_artifacts" {
+  bucket = aws_s3_bucket.platform_artifacts.id
+
+  target_bucket = aws_s3_bucket.platform_artifact_logs.id
+  target_prefix = "artifact-access-logs/"
+}
+
+# Lifecycle rules
 resource "aws_s3_bucket_lifecycle_configuration" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
@@ -48,6 +113,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "platform_artifacts" {
 
     expiration {
       days = 90
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 }
