@@ -1,0 +1,15 @@
+
+name: Application CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  application-ci:
+    uses: ./.github/workflows/reusable-ci.yml
+    with:
+      build_script: scripts/build.sh
+      test_script: scripts/test.sh
