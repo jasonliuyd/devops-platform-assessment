@@ -1,9 +1,12 @@
-#checkov:skip=CKV_AWS_144:Cross-region replication is reserved for production deployment with a defined DR region.
-#checkov:skip=CKV2_AWS_62:Artifact event notifications are not required in this assessment example.
-#checkov:skip=CKV_AWS_21:Versioning is enabled on the main artifact bucket. Log bucket versioning is not required for this example.
-#checkov:skip=CKV2_AWS_61:Lifecycle retention is configured on the main artifact bucket. Log bucket lifecycle is not required for this example.
-# Main artifact bucket
+# ============================================================
+# Main Artifact Bucket
+# ============================================================
+
 resource "aws_s3_bucket" "platform_artifacts" {
+
+  #checkov:skip=CKV_AWS_144:Cross-region replication is deferred until a production DR region is defined.
+  #checkov:skip=CKV2_AWS_62:Artifact event notifications are not required for this assessment example.
+
   bucket = "devops-platform-assessment-artifacts-example"
 
   lifecycle {
@@ -11,7 +14,10 @@ resource "aws_s3_bucket" "platform_artifacts" {
   }
 }
 
-# Enable versioning
+# ============================================================
+# Artifact Bucket Versioning
+# ============================================================
+
 resource "aws_s3_bucket_versioning" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
@@ -20,7 +26,10 @@ resource "aws_s3_bucket_versioning" "platform_artifacts" {
   }
 }
 
-# Block public access
+# ============================================================
+# Artifact Bucket Public Access Protection
+# ============================================================
+
 resource "aws_s3_bucket_public_access_block" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
@@ -30,7 +39,10 @@ resource "aws_s3_bucket_public_access_block" "platform_artifacts" {
   restrict_public_buckets = true
 }
 
-# KMS encryption
+# ============================================================
+# Artifact Bucket Encryption
+# ============================================================
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
@@ -41,12 +53,34 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "platform_artifact
   }
 }
 
-# Separate bucket for access logs
+# ============================================================
+# Separate Access Log Bucket
+# ============================================================
+
 resource "aws_s3_bucket" "platform_artifact_logs" {
+
+  #checkov:skip=CKV_AWS_144:Cross-region replication is deferred until a production DR region is defined.
+  #checkov:skip=CKV2_AWS_62:Log delivery event notifications are not required for this assessment example.
+
   bucket = "devops-platform-assessment-artifacts-logs-example"
 }
 
-# Block public access on log bucket
+# ============================================================
+# Log Bucket Versioning
+# ============================================================
+
+resource "aws_s3_bucket_versioning" "platform_artifact_logs" {
+  bucket = aws_s3_bucket.platform_artifact_logs.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# ============================================================
+# Log Bucket Public Access Protection
+# ============================================================
+
 resource "aws_s3_bucket_public_access_block" "platform_artifact_logs" {
   bucket = aws_s3_bucket.platform_artifact_logs.id
 
@@ -56,7 +90,10 @@ resource "aws_s3_bucket_public_access_block" "platform_artifact_logs" {
   restrict_public_buckets = true
 }
 
-# Encrypt log bucket
+# ============================================================
+# Log Bucket Encryption
+# ============================================================
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "platform_artifact_logs" {
   bucket = aws_s3_bucket.platform_artifact_logs.id
 
@@ -67,28 +104,62 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "platform_artifact
   }
 }
 
-# Get current AWS account ID
+# ============================================================
+# Log Bucket Lifecycle
+# ============================================================
+
+resource "aws_s3_bucket_lifecycle_configuration" "platform_artifact_logs" {
+  bucket = aws_s3_bucket.platform_artifact_logs.id
+
+  rule {
+    id     = "access-log-retention"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 90
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
+# ============================================================
+# Current AWS Account Identity
+# ============================================================
+
 data "aws_caller_identity" "current" {}
 
-# Allow S3 logging service to write access logs
+# ============================================================
+# Allow S3 Server Access Logging to Write into Log Bucket
+# ============================================================
+
 resource "aws_s3_bucket_policy" "platform_artifact_logs" {
   bucket = aws_s3_bucket.platform_artifact_logs.id
 
   policy = jsonencode({
     Version = "2012-10-17"
+
     Statement = [
       {
         Sid    = "AllowS3ServerAccessLogs"
         Effect = "Allow"
+
         Principal = {
           Service = "logging.s3.amazonaws.com"
         }
+
         Action   = "s3:PutObject"
         Resource = "${aws_s3_bucket.platform_artifact_logs.arn}/*"
+
         Condition = {
           ArnLike = {
             "aws:SourceArn" = aws_s3_bucket.platform_artifacts.arn
           }
+
           StringEquals = {
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
           }
@@ -98,7 +169,10 @@ resource "aws_s3_bucket_policy" "platform_artifact_logs" {
   })
 }
 
-# Enable access logging on artifact bucket
+# ============================================================
+# Enable Access Logging on Artifact Bucket
+# ============================================================
+
 resource "aws_s3_bucket_logging" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
@@ -106,7 +180,10 @@ resource "aws_s3_bucket_logging" "platform_artifacts" {
   target_prefix = "artifact-access-logs/"
 }
 
-# Lifecycle rules
+# ============================================================
+# Artifact Bucket Lifecycle
+# ============================================================
+
 resource "aws_s3_bucket_lifecycle_configuration" "platform_artifacts" {
   bucket = aws_s3_bucket.platform_artifacts.id
 
