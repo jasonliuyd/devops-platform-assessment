@@ -23,7 +23,24 @@ jobs:
     steps:
       - name: Checkout application source
         uses: actions/checkout@v4
+        
+      - name: Security Scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
 
+      - name: Infrastructure Security Scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: ./infra
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
       - name: Validate script paths
         env:
           BUILD_SCRIPT: ${{ inputs.build_script }}
