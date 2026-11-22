@@ -95,14 +95,17 @@ The design does not claim to have deployed or operated a production AWS platform
 
 ## 8. Repository Structure
 
-- `architecture/` — platform architecture and design
-- `.github/workflows/` — GitHub Actions automation
-- `controls/` — security and compliance controls
-- `progressive-delivery/` — rollout and rollback strategy
-- `emergency-change/` — emergency release workflow
-- `metrics/` — KPI and measurement strategy
-- `migration/` — adoption and migration plan
-- `evidence/` — validation and assessment evidence
+- `architecture/` — platform architecture, pipeline flow, and design documentation
+- `.github/workflows/` — CI/CD automation, security scanning, and reusable workflows
+- `controls/` — security and compliance control definitions
+- `infra/` — Terraform infrastructure examples and security configurations
+- `scripts/` — sample build and test scripts
+- `Dockerfile` — sample container build definition for security scanning
+- `pipelines/` — reusable pipeline examples
+- `progressive-delivery/` — deployment strategies, rollout, and rollback runbooks
+- `emergency-change/` — controlled emergency release workflow
+- `metrics/` — DORA metrics and platform KPI strategy
+- `migration/` — phased adoption and migration plan for application teams
 
 ## 9. Expected Outcomes
 
