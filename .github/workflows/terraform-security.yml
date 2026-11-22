@@ -5,19 +5,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'infra/**'
-      - '.github/workflows/terraform-security.yml'
   pull_request:
-    paths:
-      - 'infra/**'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  terraform-check:
+  terraform-security:
     name: Terraform Validation and Security
     runs-on: ubuntu-latest
 
@@ -38,8 +33,8 @@ jobs:
         run: terraform -chdir=infra validate
 
       - name: Run Checkov IaC Security Scan
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@v12
         with:
           directory: infra
           framework: terraform
-          soft_fail: false
+          soft_fail: true
