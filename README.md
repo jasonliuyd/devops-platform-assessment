@@ -115,3 +115,5 @@ The design does not claim to have deployed or operated a production AWS platform
 - Safer deployments with controlled progressive rollout.
 - Improved audit readiness and operational accountability.
 - Gradual platform adoption with reduced migration risk.
+
+CI pipeline validation
