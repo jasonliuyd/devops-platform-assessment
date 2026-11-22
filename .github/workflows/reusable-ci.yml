@@ -41,3 +41,10 @@ jobs:
         env:
           TEST_SCRIPT: ${{ inputs.test_script }}
         run: bash "$TEST_SCRIPT"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-build
+          path: output/
+          retention-days: 7
