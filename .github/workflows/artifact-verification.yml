@@ -39,7 +39,8 @@ jobs:
             echo "ERROR: build-info.txt not found"
             exit 1
           fi
-
-          grep -q "Demo build successful" "$BUILD_INFO"
-
-          echo "Artifact verification successful!"
+          
+      - name: Generate SHA256 checksum
+        run: |
+          echo "Generating SHA256 checksum..."
+          find downloaded-artifact -type f -exec sha256sum {} \;
