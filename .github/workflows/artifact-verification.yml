@@ -1,0 +1,46 @@
+name: Artifact Verification
+
+on:
+  workflow_run:
+    workflows:
+      - Application CI
+    - Test reusable CI pipeline execution
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  verify-artifact:
+    name: Download and Verify Build Artifact
+    runs-on: ubuntu-latest
+
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: application-build
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: downloaded-artifact
+
+      - name: Verify artifact exists
+        run: |
+          echo "Checking downloaded artifact..."
+
+          find downloaded-artifact -type f
+
+          BUILD_INFO=$(find downloaded-artifact -name "build-info.txt" -type f | head -n 1)
+
+          if [ -z "$BUILD_INFO" ]; then
+            echo "ERROR: build-info.txt not found"
+            exit 1
+          fi
+
+          grep -q "Demo build successful" "$BUILD_INFO"
+
+          echo "Artifact verification successful!"
