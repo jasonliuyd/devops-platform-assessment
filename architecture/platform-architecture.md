@@ -2,190 +2,167 @@
 
 ## 1. Architecture Overview
 
-This architecture proposes a centralized AWS DevOps delivery platform designed to support 40 application teams using different workload types, including Amazon ECS, Amazon EKS, and AWS Lambda.
+This design provides a shared CI/CD platform for 40 application teams running workloads on Amazon ECS, Amazon EKS, and AWS Lambda.
 
-The platform standardizes CI/CD workflows, security validation, artifact management, environment promotion, monitoring, and auditability while allowing application teams to retain ownership of their applications.
+The goal is to make deployments more consistent and secure without forcing every team to use the same deployment method. Teams can continue to manage their applications, while the platform provides common workflows, security checks, artifact handling, and deployment controls.
 
-The architecture is divided into four layers:
+The platform consists of four main areas:
 
-- CI/CD Delivery Pipeline
-- AWS Deployment Targets
-- Monitoring, Audit & Rollback
-- Security Foundation
-
----
+- CI/CD Pipeline
+- AWS Workload Deployment
+- Monitoring and Rollback
+- Security and Access Control
 
 ## 2. Layer 1 — CI/CD Delivery Pipeline
 
 ### Application Teams
 
-Forty application teams maintain their own GitHub repositories containing application source code and workload-specific configurations.
+Each team maintains its own GitHub repository, application code, and workload-specific configuration.
 
-Teams remain responsible for their application code, testing, and application requirements.
+Teams are responsible for their application build requirements and tests. The platform provides shared workflows and security checks that can be reused across repositories.
 
-### CI/CD Platform
+### GitHub Actions
 
-GitHub Actions provides the CI/CD execution platform using centrally maintained and reusable workflows.
+GitHub Actions is used to run the CI/CD pipeline.
 
-The Platform Team maintains common pipeline standards and reusable workflow templates, allowing teams to adopt consistent delivery practices without requiring every application to use the same build process.
+The Platform Team maintains reusable workflows for common tasks such as building, testing, scanning, and deployment. Teams can use these workflows while adding steps required by their own applications.
 
-### Security Gates
+This avoids maintaining completely different pipelines for every team, while still allowing differences between ECS, EKS, and Lambda workloads.
 
-Automated validation is performed before artifacts are approved for deployment.
+### Pipeline Validation
 
-The pipeline includes:
+Before an application is deployed, the pipeline runs the required checks. Depending on the workload, these may include:
 
 - Build and unit tests
-- SAST and dependency scanning
-- Terraform and Infrastructure-as-Code validation
-- Container security scanning
+- Code and dependency scanning
+- Terraform validation and security checks
+- Container image scanning using Trivy
 - SBOM generation and artifact signing
 
-Failed mandatory checks prevent the pipeline from progressing to the next stage.
+If a mandatory check fails, the pipeline stops and the artifact is not promoted to the next stage.
 
-### Artifact Repository
+### Artifact Management
 
-Amazon Elastic Container Registry (ECR) stores versioned container images.
+Container images are stored in Amazon ECR.
 
-Artifacts are verified and signed before promotion. The same validated artifact is promoted across environments instead of rebuilding separately for each environment.
+Once an artifact passes the required checks, the same artifact is promoted through Development, Staging, and Production. It is not rebuilt separately for each environment, which helps avoid differences between the tested version and the version eventually deployed.
 
 ### Environment Promotion
 
-The platform follows a controlled promotion process:
+The deployment process follows these stages:
 
 **Development → Staging → Production**
 
-Production deployment requires approval before the release proceeds.
-
-Environment protection and deployment permissions help prevent unauthorized production releases.
-
----
+Each stage provides an opportunity to validate the application before moving to the next environment. Production deployment is protected by approval and environment-level access controls.
 
 ## 3. Layer 2 — AWS Deployment Targets
 
-The platform supports different AWS workload types while maintaining common security and delivery standards.
+The platform supports ECS, EKS, and Lambda. Each workload uses a deployment strategy suited to its runtime rather than forcing a single deployment method across all applications.
 
 ### Amazon ECS — Blue/Green Deployment
 
-ECS workloads use Blue/Green deployment to introduce a new application version while maintaining the existing version as a fallback.
+For ECS services, Blue/Green deployment can be used to run the new version alongside the current version.
 
-Traffic can be shifted to the new version after validation, with rollback available if deployment health deteriorates.
+The new version is validated before traffic is switched over. If the deployment causes problems, traffic can be returned to the previous version, provided the deployment and traffic-routing configuration support rollback.
 
 ### Amazon EKS — Canary Deployment
 
-EKS workloads use Canary deployment to expose a new version to a limited portion of traffic before expanding the rollout.
+For EKS workloads, Canary deployment can be used to release a new version to a smaller portion of traffic first.
 
-Deployment health and application metrics are evaluated before proceeding with the rollout.
+The rollout is monitored before more traffic is sent to the new version. This helps identify issues early without affecting all users at once.
+
+Canary rollout and traffic control require an appropriate deployment and routing setup within the EKS environment.
 
 ### AWS Lambda — Weighted Traffic Shifting
 
-Lambda workloads use versioned deployments and weighted traffic shifting to gradually direct traffic to a new version.
+Lambda supports versioned deployments using aliases and weighted traffic routing.
 
-If validation fails, traffic can be shifted back to the previous stable version.
+Traffic can be gradually directed to the new version while the existing version remains available. If the new version shows problems, traffic can be shifted back to the stable version.
 
-Each deployment strategy is selected according to the workload type, while common platform controls remain consistent.
-
----
+The deployment strategy depends on the workload, but the same platform security and validation requirements apply to all three deployment targets.
 
 ## 4. Layer 3 — Monitoring, Audit & Rollback
 
 ### AWS CloudTrail
 
-CloudTrail records AWS API activity and provides audit records for AWS account activity, access, and deployment-related operations.
+CloudTrail records AWS API activity, including actions performed by users, roles, and services.
 
-These records support investigation, traceability, and compliance requirements.
+These logs can be used to investigate changes, identify who performed an action, and provide audit evidence for deployment and infrastructure activities.
 
 ### Amazon CloudWatch
 
-CloudWatch collects application and deployment metrics, logs, and alerts.
+CloudWatch is used to monitor application and deployment health through logs, metrics, and alarms.
 
-Deployment health can be evaluated using indicators such as:
+Depending on the application, monitoring may include:
 
 - HTTP 5xx error rate
 - Application latency
 - Health check failures
-- Resource utilization
-- Deployment-specific health metrics
+- CPU and memory utilization
+- Application-specific metrics
 
-### Automated Rollback
+The monitoring thresholds should be defined based on each application's normal behavior and service requirements.
 
-Automated rollback is triggered when deployment health checks fail or configured deployment metrics breach defined thresholds.
+### Rollback
 
-The deployment process stops or reverses the rollout and restores the previous stable version where the workload's deployment mechanism supports rollback.
+If a deployment fails its health checks or breaches configured monitoring thresholds, the rollout should stop and rollback should be initiated where supported.
 
-Rollback thresholds are configurable based on workload requirements.
+The rollback method depends on the deployment type. ECS can return traffic to the previous task set, EKS can revert the rollout using its deployment mechanism, and Lambda can shift traffic back to the previous version.
 
----
+Rollback behavior and thresholds need to be configured and tested for each workload before being relied on in Production.
 
 ## 5. Layer 4 — Security Foundation
 
-Security controls apply across all layers of the platform.
+Security is applied throughout the pipeline and deployment process. The platform avoids relying on shared long-lived credentials and uses separate permissions for different deployment responsibilities.
 
-### GitHub OIDC — Federated Identity
+### GitHub OIDC
 
-GitHub Actions authenticates to AWS using OpenID Connect (OIDC) federation.
+GitHub Actions uses OIDC federation to authenticate with AWS.
 
-This avoids the need to store long-lived AWS access keys in GitHub repositories or pipeline secrets.
+Instead of storing permanent AWS access keys in GitHub Secrets, the workflow requests an identity token. AWS validates the trusted GitHub identity and allows the workflow to assume an IAM role with temporary credentials.
 
-### AWS IAM — Least Privilege Roles
+The trust policy should restrict access to the intended repository and branch or environment.
 
-IAM roles provide scoped permissions for pipeline and deployment activities.
+### AWS IAM
 
-Permissions are separated by workload, environment, and deployment responsibility to reduce unnecessary access.
+IAM roles are used to control what the pipeline can access and which actions it can perform.
 
-### AWS Secrets Manager — Secret Management
+Permissions are scoped according to the workload and environment. Production deployment permissions are kept separate from development and staging access to reduce the risk of accidental or unauthorized changes.
 
-Application and deployment secrets are stored and retrieved securely through Secrets Manager rather than hardcoded into source code or pipeline files.
+### AWS Secrets Manager
 
-### AWS KMS — Encryption
+Application secrets and credentials are stored in Secrets Manager rather than being hardcoded into repositories or workflow files.
 
-AWS Key Management Service (KMS) provides encryption key management for supported data and secrets.
+Only the workloads or roles that need a secret should be allowed to retrieve it.
 
-### Separate AWS Accounts
+### AWS KMS
 
-Development, Staging, and Production environments are isolated using separate AWS accounts.
+KMS is used to manage encryption keys for supported AWS services and stored data.
 
-This separation reduces the impact of compromised credentials, accidental changes, and deployment failures across environments.
+Encryption requirements should be applied to relevant resources, including secrets and storage, based on the platform's security requirements.
 
----
+### AWS Account Separation
+
+Development, Staging, and Production are separated into different AWS accounts.
+
+This provides an additional boundary between environments and reduces the risk that a change or compromised credential in one environment can affect another.
 
 ## 6. Ownership & Responsibilities
 
 ### Platform Team
 
-- Maintain centralized reusable CI/CD workflows.
-- Define mandatory security and pipeline controls.
-- Maintain deployment standards and platform guardrails.
-- Manage pipeline reliability and platform metrics.
-- Improve reusable templates based on team feedback.
+The Platform Team maintains shared workflows, security controls, and platform tools. It also manages improvements to the platform.
 
 ### Application Teams
 
-- Maintain application source code.
-- Define application build and test requirements.
-- Manage application configurations.
-- Define health checks and deployment validation requirements.
-- Own application reliability and operational support.
+Application Teams manage their own code, tests, configuration, and application health.
 
----
+They use the shared workflows but can add steps based on their application requirements.
 
-## 7. Design Principles
+## 7. Scope & Assumptions
 
-- Standardize delivery controls without forcing identical workload deployment methods.
-- Build and verify artifacts once, then promote the same artifacts across environments.
-- Use federated identity and short-lived AWS credentials.
-- Enforce security validation before production deployment.
-- Require production approval and controlled deployment access.
-- Support progressive delivery and rollback for critical workloads.
-- Maintain application ownership while providing a standardized paved road.
-- Ensure deployment activity is traceable and auditable.
+This repository is a reference design and proof of concept for the proposed DevOps platform.
 
----
+It shows how the platform could work, including the CI/CD process, security controls, and deployment strategies. It is not a fully deployed AWS environment.
 
-## 8. Scope & Assumptions
-
-This architecture represents a proposed reference design for the assessment.
-
-It demonstrates the intended platform architecture, security controls, deployment strategies, and operational capabilities.
-
-The diagram and design do not represent a fully deployed AWS production environment. AWS integrations, deployment automation, monitoring thresholds, and rollback mechanisms would require implementation, workload-specific configuration, and validation before production use.
+Some parts would still need to be configured and tested in AWS before they could be used in Production.
