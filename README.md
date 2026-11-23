@@ -116,4 +116,8 @@ The design does not claim to have deployed or operated a production AWS platform
 - Improved audit readiness and operational accountability.
 - Gradual platform adoption with reduced migration risk.
 
-CI pipeline validation
+## Architecture
+
+[AWS DevOps Platform Architecture](architecture/platform-architecture.png)
+
+See [Platform Architecture](architecture/platform-architecture.md) for details.
