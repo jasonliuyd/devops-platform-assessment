@@ -1,95 +1,163 @@
-# Progressive Delivery Strategy and Rollback Runbook
+# Progressive Delivery Strategy
 
-## 1. Purpose
+## 1. Objective
 
-Progressive delivery reduces deployment risk by gradually introducing application changes into production while monitoring application health.
+Progressive delivery reduces deployment risk by gradually introducing new application versions to production.
 
-The platform supports workload-specific deployment strategies for Amazon ECS and Amazon EKS.
+Instead of releasing a new version to all users immediately, the platform validates application health during deployment and increases traffic only when the deployment is successful.
+
+The platform supports different progressive delivery strategies based on workload type:
+
+- Amazon ECS — Blue/Green Deployment
+- Amazon EKS — Canary Deployment
+- AWS Lambda — Weighted Traffic Shifting
+
+---
 
 ## 2. Deployment Strategies
 
-### Amazon ECS — Blue/Green Deployment
+### 2.1 Amazon ECS — Blue/Green Deployment
 
 Blue/Green deployment maintains two application environments:
 
-- Blue: Current production version.
-- Green: New application version.
+- Blue — Current stable version
+- Green — New application version
 
-The new version is deployed to Green and validated before production traffic is shifted.
+Deployment process:
 
-Traffic is gradually shifted to the new version after validation. If deployment health deteriorates, traffic is redirected to the previous stable version.
+1. Deploy the new version to the Green environment.
+2. Run health checks and validation.
+3. Route traffic to Green gradually or after validation, according to the configured deployment strategy.
+4. Monitor application health and deployment metrics.
+5. Complete deployment if all validation checks pass.
+6. Roll back to Blue if deployment health fails.
 
-### Amazon EKS — Canary Deployment
+Rollback:
 
-Canary deployment introduces a new application version to a small percentage of production traffic.
+The previous Blue version remains available during the deployment process and can be restored if the new version fails validation.
 
-The rollout gradually increases traffic when health checks and monitoring metrics remain within acceptable thresholds.
+---
 
-If metrics exceed defined thresholds, the rollout is paused or rolled back.
+### 2.2 Amazon EKS — Canary Deployment
 
-## 3. Deployment Validation
-
-During progressive rollout, the platform monitors:
-
-- Application error rate
-- HTTP 5xx responses
-- Response latency (p95)
-- Pod or task health
-- CPU and memory utilization
-- Application-specific health checks
+Canary deployment introduces a new version to a small percentage of production traffic before a full rollout.
 
 Example rollout stages:
 
 - 5% traffic — Initial validation
 - 25% traffic — Expanded validation
-- 50% traffic — Intermediate validation
-- 100% traffic — Full rollout
+- 50% traffic — Monitor application health
+- 100% traffic — Complete rollout
 
-Progression between stages requires healthy metrics and successful validation.
+At each stage, application health and deployment metrics are evaluated before proceeding.
 
-## 4. Rollback Triggers
+Rollback:
 
-Rollback or rollout pause is triggered when:
+If the canary version exceeds configured failure thresholds, traffic is returned to the previous stable version and the rollout is stopped.
 
-- HTTP 5xx error rate exceeds 5%.
-- p95 latency exceeds twice the established baseline.
-- Application health checks fail.
-- Critical application functionality is degraded.
-- Container or pod health becomes unstable.
+---
 
-Thresholds are illustrative and must be adjusted based on application SLOs and baseline performance.
+### 2.3 AWS Lambda — Weighted Traffic Shifting
 
-## 5. Rollback Procedure
+Lambda deployment uses versioned functions and weighted traffic shifting through Lambda aliases.
 
-1. Stop further traffic progression.
-2. Confirm the deployment is unhealthy using monitoring metrics.
-3. Redirect traffic to the previous stable version or roll back to the previous deployment.
-4. Verify application health and service recovery.
-5. Notify stakeholders and record the rollback event.
-6. Investigate the failure before attempting another release.
+Example rollout stages:
 
-## 6. Database Migration Safety
+- 10% traffic to the new version
+- 50% traffic to the new version
+- 100% traffic to the new version
 
-Database changes must support application compatibility during progressive deployment.
+The rollout proceeds only when health checks and monitoring metrics remain within acceptable thresholds.
 
-The platform recommends the Expand–Migrate–Contract approach:
+Rollback:
 
-- **Expand:** Add backward-compatible schema changes.
-- **Migrate:** Deploy application changes and migrate data incrementally.
-- **Contract:** Remove obsolete schema or fields only after old application versions are no longer running.
+Traffic is shifted back to the previous stable Lambda version when deployment validation fails.
 
-Destructive database changes must not be tied to an immediate application rollback.
+---
 
-## 7. Ownership
+## 3. Deployment Health & Rollback Thresholds
 
-**Platform Team**
+The platform uses automated monitoring to determine whether a release should continue or be rolled back.
 
-- Provides deployment templates and rollout guardrails.
-- Defines monitoring and rollback mechanisms.
-- Maintains progressive delivery standards.
+Example thresholds:
 
-**Application Teams**
+| Metric | Rollback Condition |
+|---|---|
+| HTTP 5xx Error Rate | Greater than 5% |
+| Application Latency | P95 latency exceeds 2x baseline |
+| Health Checks | Critical health check failure |
+| Deployment Status | Deployment fails or new version becomes unhealthy |
 
-- Define application health checks and SLOs.
-- Validate application behavior during rollout.
-- Own application-specific rollback readiness and database compatibility.
+These thresholds are example defaults for the assessment. Production thresholds should be adjusted based on application baselines, traffic patterns, and service-level objectives.
+
+Deployment monitoring uses Amazon CloudWatch metrics, alarms, and application health checks.
+
+---
+
+## 4. Deployment Decision Process
+
+### Continue Deployment
+
+The rollout proceeds to the next traffic stage when:
+
+- Health checks pass.
+- Error rate remains within the configured threshold.
+- Application latency remains acceptable.
+- No critical deployment alarms are triggered.
+
+### Stop and Roll Back
+
+The rollout stops and rollback is initiated when:
+
+- Critical health checks fail.
+- Error rate exceeds the configured threshold.
+- Application latency breaches the configured limit.
+- Deployment alarms indicate application instability.
+
+The previous stable version is restored where supported by the deployment mechanism.
+
+---
+
+## 5. Database Change Strategy
+
+Database changes must remain compatible with both the current and new application versions during progressive deployment.
+
+The platform follows the Expand-and-Contract approach:
+
+1. Expand — Add new schema or fields without breaking the current application.
+2. Migrate — Update application logic and migrate data gradually if required.
+3. Validate — Confirm the new application version works with the updated schema.
+4. Contract — Remove obsolete schema only after the old application version is no longer required.
+
+Destructive database changes must not be automatically reversed without validating data safety.
+
+Database rollback may require a forward-fix migration or recovery procedure instead of simply reverting the application version.
+
+---
+
+## 6. Responsibilities
+
+### Platform Team
+
+- Maintain progressive delivery templates.
+- Provide standard deployment and rollback mechanisms.
+- Define configurable monitoring and health check requirements.
+- Ensure deployment evidence is collected.
+
+### Application Teams
+
+- Define application health checks.
+- Configure workload-specific deployment parameters.
+- Define application metrics and service-level objectives.
+- Validate application behavior after deployment.
+- Participate in incident response when rollback occurs.
+
+---
+
+## 7. Expected Outcome
+
+Progressive delivery enables application teams to release changes with reduced production risk.
+
+The platform provides consistent deployment safeguards while allowing ECS, EKS, and Lambda workloads to use their appropriate deployment strategies.
+
+Automated health validation, controlled traffic progression, and rollback mechanisms help reduce deployment failures and improve service reliability.
