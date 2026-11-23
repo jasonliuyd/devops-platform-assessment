@@ -4,7 +4,7 @@
 
 This policy defines the minimum security requirements for AWS infrastructure provisioned through Terraform.
 
-The objective is to detect misconfigurations before infrastructure changes are deployed.
+It helps detect security issues and misconfigurations before infrastructure changes are deployed.
 
 ## Mandatory Security Checks
 
@@ -22,16 +22,16 @@ Terraform code must pass the following checks before deployment:
 
 The Terraform validation pipeline performs the following checks:
 
-1. Terraform formatting validation.
+1. Terraform formatting check.
 2. Terraform configuration validation.
 3. Checkov security scanning.
 4. Review of security findings.
-5. Approval before applying changes to production.
+5. Approval before applying changes to Production.
 
 ## Handling Security Findings
 
-- Critical and high-risk findings must be resolved before production deployment.
-- Findings must not be bypassed without documented justification.
+- Critical and high-risk findings must be resolved before Production deployment.
+- Findings must not be ignored without documented justification.
 - Exceptions must include a reason, an owner, and an expiration date.
 - Security exceptions must be reviewed periodically.
 
@@ -39,4 +39,4 @@ The Terraform validation pipeline performs the following checks:
 
 This policy is a reference implementation for the DevOps Platform Assessment.
 
-It demonstrates infrastructure security controls using Terraform and Checkov. Actual AWS deployment, account configuration, and enforcement require environment-specific configuration.
+It shows how Terraform security checks can be used with Checkov. Actual AWS deployment, account configuration, and enforcement still require environment-specific configuration.
