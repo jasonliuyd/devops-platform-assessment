@@ -116,14 +116,28 @@ The design does not claim to have deployed or operated a production AWS platform
 - Improved audit readiness and operational accountability.
 - Gradual platform adoption with reduced migration risk.
 
-### AI Assistance Disclosure
-
-AI tools were used to assist with research, technical understanding, and documentation during the preparation of this assessment. The final solution and submission were reviewed by me.
-
-### Sources
-AWS official documentation.
 ## Architecture
 
 [AWS DevOps Platform Architecture](architecture/platform-architecture.png)
 
 See [Platform Architecture](architecture/platform-architecture.md) for details.
+
+### References
+
+**AWS Architecture & Deployment**
+- [Amazon ECS Blue/Green Deployments](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/deployment-type-bluegreen.html)
+- [Amazon ECS Canary Deployments](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/canary-deployment.html)
+- [AWS Lambda Weighted Alias Routing](https://docs.aws.amazon.com/lambda/latest/dg/configuring-alias-routing.html)
+
+**Security & Access Control**
+- [IAM Security Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
+- [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/retrieving-secrets_github.html)
+
+**Monitoring & Infrastructure Security**
+- [AWS CloudTrail Security Best Practices](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/best-practices-security.html)
+- [Amazon S3 Security Best Practices](https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html)
+- [Amazon S3 Versioning](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html)
+
+### AI Assistance Disclosure
+
+AI tools were used to assist with research, technical understanding, and documentation during the preparation of this assessment. The final solution and submission were reviewed by me.
