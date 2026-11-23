@@ -116,6 +116,12 @@ The design does not claim to have deployed or operated a production AWS platform
 - Improved audit readiness and operational accountability.
 - Gradual platform adoption with reduced migration risk.
 
+### AI Assistance Disclosure
+
+AI tools were used to assist with research, technical understanding, and documentation during the preparation of this assessment. The final solution and submission were reviewed by me.
+
+### Sources
+AWS official documentation.
 ## Architecture
 
 [AWS DevOps Platform Architecture](architecture/platform-architecture.png)
