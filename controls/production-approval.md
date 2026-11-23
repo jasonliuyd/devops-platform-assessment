@@ -2,37 +2,35 @@
 
 ## 1. Purpose
 
-Prevent unauthorized or unvalidated changes from being deployed
-to production environments.
+Prevent unauthorized or untested changes from being deployed to Production.
 
 ## 2. Deployment Requirements
 
-All production deployments must:
+All Production deployments must:
 
-- Pass the required CI pipeline.
+- Pass the required CI pipeline checks.
 - Pass unit and integration tests.
-- Pass dependency and security scanning.
-- Generate an SBOM where applicable.
-- Use a verified and immutable artifact.
-- Deploy the same artifact promoted from Staging.
-- Receive approval before production deployment.
+- Pass dependency and security scans.
+- Generate an SBOM where required.
+- Use a verified artifact with an immutable reference.
+- Promote the same artifact that was tested in Staging.
+- Receive approval before deployment.
 
 ## 3. Production Approval
 
-Production deployments require approval from an authorized reviewer.
+Production deployments must be approved by an authorized reviewer.
 
-Approvers must not approve their own deployment when separation
-of duties is required.
+Where separation of duties is required, the person approving the deployment must not be the person who initiated it.
 
-Approval must be recorded and auditable.
+All approvals must be recorded for auditing.
 
 ## 4. Deployment Permissions
 
-- Production access must use a dedicated AWS IAM role.
-- Permissions must follow the principle of least privilege.
-- GitHub Actions must use OIDC federation.
-- No long-lived AWS credentials may be stored in GitHub secrets.
-- Production deployment permissions must be separated from non-production.
+- Use a dedicated AWS IAM role for Production deployment.
+- Follow the principle of least privilege.
+- Use OIDC federation for GitHub Actions authentication.
+- Do not store long-lived AWS credentials in GitHub Secrets.
+- Keep Production permissions separate from non-production environments.
 
 ## 5. Mandatory Gates
 
@@ -42,13 +40,15 @@ Production deployment must be blocked if:
 - Security checks fail.
 - Artifact signature verification fails.
 - Required approval is missing.
-- The deployment artifact cannot be verified.
-- Required deployment evidence is unavailable.
+- The artifact cannot be verified.
+- Required deployment evidence is missing.
 
 ## 6. Ownership
 
-The Platform Team owns production deployment controls,
-approval policies, and pipeline enforcement.
+**Platform Team**
 
-Application Teams own application readiness, test quality,
-release validation, and deployment monitoring.
+Maintains production deployment controls, approval policies, and pipeline enforcement.
+
+**Application Teams**
+
+Responsible for application readiness, test quality, release validation, and monitoring after deployment.
