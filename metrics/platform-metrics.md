@@ -4,7 +4,7 @@
 
 Platform metrics are used to measure delivery efficiency, platform reliability, security control effectiveness, and adoption across 40 application teams.
 
-Metrics should help teams identify bottlenecks and improve delivery quality rather than encourage teams to optimize numbers at the expense of reliability.
+Metrics should help teams identify bottlenecks and improve delivery quality rather than encourage teams to focus on numbers at the expense of reliability.
 
 ## 2. Delivery Performance (DORA Metrics)
 
@@ -15,7 +15,7 @@ The platform tracks the following delivery metrics:
 - Change Failure Rate: Percentage of production deployments that cause incidents, rollbacks, or hotfixes.
 - Mean Time to Recovery (MTTR): Time required to restore service following a production incident.
 
-These metrics are reviewed at platform and team level to identify improvement opportunities.
+These metrics are reviewed at platform and team level to identify areas for improvement.
 
 ## 3. Platform Reliability Metrics
 
@@ -52,7 +52,7 @@ Adoption metrics help the Platform Team identify migration blockers and improve 
 
 ## 6. Data Collection
 
-Metrics are collected from multiple sources:
+Metrics can be collected from multiple sources:
 
 - GitHub Actions workflow execution data
 - GitHub deployment and environment approval records
@@ -60,7 +60,7 @@ Metrics are collected from multiple sources:
 - Amazon CloudWatch application and deployment metrics
 - Security scanning and SBOM workflow outputs
 
-The platform consolidates these metrics into dashboards for engineering leadership and platform operations.
+These data sources can be used to build dashboards for engineering leadership and platform operations.
 
 ## 7. Review and Improvement
 
