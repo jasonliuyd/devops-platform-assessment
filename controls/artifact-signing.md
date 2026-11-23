@@ -2,43 +2,44 @@
 
 ## 1. Purpose
 
-Ensure that artifacts deployed to production are verified,
-traceable, and have not been tampered with after the build process.
+Ensure that artifacts deployed to Production are verified and have not been changed after they are built.
 
 ## 2. Artifact Requirements
 
-- Artifacts must have a unique version identifier.
-- Container images should be referenced using immutable digests.
-- Artifacts must not be rebuilt separately for each environment.
+- Each artifact must have a unique version.
+- Container images should be referenced by immutable digests.
+- Artifacts must not be rebuilt for each environment.
 - The same artifact must be promoted from Development to Staging and Production.
-- Software Bill of Materials (SBOM) must be generated for supported artifacts.
+- An SBOM must be generated for supported artifacts.
 
 ## 3. Signing
 
 - Container images must be signed using Cosign.
-- Signing should use keyless signing with GitHub OIDC where supported.
-- Signing identity must be associated with the trusted CI workflow.
-- Signing evidence must be retained for verification and audit purposes.
+- Keyless signing with GitHub OIDC should be used where supported.
+- The signature must be linked to a trusted CI workflow.
+- Signing records must be kept for later verification.
 
 ## 4. Verification
 
-Before production deployment:
+Before deploying to Production, the pipeline must:
 
 - Verify the artifact signature.
-- Verify the artifact digest.
-- Confirm the signing identity matches the approved workflow.
+- Check the artifact digest.
+- Confirm that the signing identity belongs to an approved workflow.
 - Reject artifacts that fail verification.
 
 ## 5. Enforcement
 
-Artifact verification is a mandatory production deployment gate.
+Artifact verification is required before Production deployment.
 
-Application teams cannot bypass artifact verification
-through workload-specific pipeline configuration.
+Application teams must not be able to bypass verification through their own pipeline configuration.
 
 ## 6. Ownership
 
-The Platform Team owns signing and verification standards.
+**Platform Team**
 
-Application Teams own application source code and
-workload-specific build configuration.
+Maintains the signing and verification standards.
+
+**Application Teams**
+
+Maintain application code and their build configuration.
