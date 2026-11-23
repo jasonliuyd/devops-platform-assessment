@@ -47,7 +47,7 @@ Reusable pipeline architecture, artifact management, environment promotion, iden
 Automated testing, infrastructure security scanning, secrets scanning, dependency scanning, SBOM generation, artifact integrity, and production approval gates.
 
 ### Task 3 — Progressive Delivery
-Deployment strategies for ECS and EKS, deployment health validation, traffic shifting, monitoring thresholds, rollback procedures, and database change considerations.
+Deployment strategies for ECS, EKS and Lambda deployment health validation, traffic shifting, monitoring thresholds, rollback procedures, and database change considerations.
 
 ### Task 4 — Emergency Change
 Controlled expedited release process with documented justification, restricted access, minimum validation requirements, monitoring, and post-incident reconciliation.
