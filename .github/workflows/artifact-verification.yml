@@ -4,7 +4,6 @@ on:
   workflow_run:
     workflows:
       - Application CI
-    - Test reusable CI pipeline execution
     types:
       - completed
 
